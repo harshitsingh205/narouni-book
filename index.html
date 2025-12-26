@@ -3,8 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Flipbook</title>
+    <title>Professional PDF Flipbook</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ffffff;
+            --dark-color: #2c3e50;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-radius: 8px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,207 +24,419 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--dark-color);
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        /* App Container */
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-        }
-
-        .upload-options {
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--light-color);
+            padding: 30px 25px;
+            box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .logo {
+            text-align: center;
             margin-bottom: 40px;
-            padding: 30px;
-            background: #f8f9fa;
-            border-radius: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
         }
 
-        .option-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            border-left: 5px solid #667eea;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+        .logo h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: 700;
         }
 
-        .option-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
         }
 
-        .option-title {
+        .stats-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            justify-content: space-between;
             margin-bottom: 15px;
         }
 
-        .option-title i {
-            font-size: 2rem;
-            color: #667eea;
+        .stat-item:last-child {
+            margin-bottom: 0;
         }
 
-        .option-title h3 {
-            color: #333;
+        .stat-value {
             font-size: 1.5rem;
+            font-weight: 700;
         }
 
-        .option-desc {
-            color: #666;
+        /* Table of Contents */
+        .toc-section h3 {
+            font-size: 1.1rem;
             margin-bottom: 20px;
-            line-height: 1.6;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .file-input {
-            display: none;
+        .toc-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
-        .file-label {
-            display: inline-block;
-            padding: 12px 25px;
-            background: #667eea;
-            color: white;
-            border-radius: 8px;
+        .toc-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .file-label:hover {
-            background: #764ba2;
+        .toc-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
         }
 
-        .flipbook-container {
-            display: none;
+        .toc-item.active {
+            background: #e3f2fd;
+            border-left-color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .toc-item i {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .range-slider {
             width: 100%;
-            height: 70vh;
-            background: #f5f5f5;
-            border-radius: 10px;
-            overflow: hidden;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-btn.active {
+            border-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        .theme-btn.white {
+            background: #ffffff;
+        }
+
+        .theme-btn.skin {
+            background: #f3e5d8;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 300px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toolbar-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f8f9fa;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .toolbar-btn:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .toolbar-btn.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .page-navigator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .page-input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Flipbook Container */
+        .flipbook-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             position: relative;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            min-height: 600px;
         }
 
         #book {
-            width: 100%;
-            height: 100%;
+            width: 90%;
+            height: 90%;
             position: relative;
+            perspective: 2000px;
         }
 
+        /* Page Styling */
         .page {
             position: absolute;
             width: 50%;
             height: 100%;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
             transform-origin: left center;
-            transition: transform 0.8s ease;
+            transition: transform 0.8s cubic-bezier(0.42, 0, 0.58, 1);
             cursor: pointer;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(0,0,0,0.02) 0%, 
+                transparent 30%, 
+                transparent 70%, 
+                rgba(0,0,0,0.02) 100%);
+            pointer-events: none;
         }
 
         .page:nth-child(odd) {
             transform-origin: right center;
-            left: 0;
-        }
-
-        .page:nth-child(even) {
-            left: 50%;
         }
 
         .page img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            background: white;
         }
 
+        /* Realistic Page Turn Effect */
         .page.flipping {
             transform: rotateY(-180deg);
-            z-index: 100;
+            z-index: 1000;
+            box-shadow: -5px 5px 40px rgba(0, 0, 0, 0.25),
+                        inset 10px 0 20px rgba(0, 0, 0, 0.1);
         }
 
         .page:nth-child(odd).flipping {
             transform: rotateY(180deg);
+            box-shadow: 5px 5px 40px rgba(0, 0, 0, 0.25),
+                        inset -10px 0 20px rgba(0, 0, 0, 0.1);
         }
 
-        .controls {
-            display: none;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        .page.flipping::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right,
+                rgba(0,0,0,0.1) 0%,
+                transparent 5%,
+                transparent 95%,
+                rgba(0,0,0,0.1) 100%);
+            pointer-events: none;
         }
 
-        button {
-            padding: 12px 30px;
-            background: #667eea;
+        /* Page Number Indicator */
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s;
-            min-width: 120px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 10;
         }
 
-        button:hover {
-            background: #764ba2;
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 20px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--light-color);
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .zoom-btn:hover {
+            background: var(--secondary-color);
+            color: white;
             transform: translateY(-2px);
         }
 
-        button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .page-info {
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            gap: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
         }
 
-        .loading {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #667eea;
+        .loader {
+            width: 70px;
+            height: 70px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 30px;
         }
 
         @keyframes spin {
@@ -220,80 +444,63 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error-message {
-            display: none;
-            padding: 20px;
-            background: #fee;
-            color: #c00;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 5px solid #c00;
+        .loading-text {
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
         }
 
-        .error-details {
-            font-family: monospace;
-            background: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-
-        #fileName {
-            margin-top: 10px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .instructions {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
+        .progress-bar {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
             margin-top: 20px;
-            border-left: 5px solid #2196f3;
         }
 
-        .instructions h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .instructions ol {
-            margin-left: 20px;
-            color: #555;
-        }
-
-        .instructions li {
-            margin-bottom: 10px;
-        }
-
-        .thumbnail-bar {
-            display: none;
-            overflow-x: auto;
-            padding: 10px;
+        .progress-fill {
+            height: 100%;
             background: white;
-            border-radius: 10px;
-            margin-top: 20px;
-            white-space: nowrap;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        /* Thumbnail Strip */
+        .thumbnail-strip {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 30px;
+            overflow-x: auto;
         }
 
         .thumbnail {
-            display: inline-block;
+            flex: 0 0 auto;
             width: 80px;
             height: 100px;
-            margin-right: 10px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            border-radius: 5px;
+            border-radius: 4px;
             overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            border: 2px solid transparent;
         }
 
         .thumbnail:hover {
-            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
 
         .thumbnail.active {
-            border-color: #ff5722;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
         }
 
         .thumbnail img {
@@ -302,164 +509,423 @@
             object-fit: cover;
         }
 
-        .zoom-controls {
+        .thumbnail-number {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             display: flex;
-            gap: 10px;
-            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
         }
 
-        .zoom-btn {
-            width: 40px;
-            height: 40px;
+        /* Fullscreen Mode */
+        body.fullscreen {
+            padding: 0;
+        }
+
+        body.fullscreen .sidebar,
+        body.fullscreen .toolbar,
+        body.fullscreen .thumbnail-strip {
+            display: none;
+        }
+
+        body.fullscreen .main-content {
+            margin-left: 0;
+            padding: 0;
+        }
+
+        body.fullscreen .flipbook-container {
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+            
+            .toolbar {
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .flipbook-container {
+                min-height: 400px;
+            }
+            
+            .zoom-controls {
+                bottom: 20px;
+                padding: 10px 15px;
+            }
+            
+            .zoom-btn {
+                width: 35px;
+                height: 35px;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.9);
+            background: var(--secondary-color);
+            color: white;
             border: none;
-            font-size: 18px;
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow);
+        }
+
+        /* Theme Variants */
+        body.theme-skin {
+            background: linear-gradient(135deg, #e8d1b9 0%, #d4b696 100%);
+        }
+
+        body.theme-skin .sidebar,
+        body.theme-skin .toolbar,
+        body.theme-skin .flipbook-container,
+        body.theme-skin .thumbnail-strip {
+            background: #f3e5d8;
+        }
+
+        body.theme-skin .page {
+            background: #faf3eb;
+        }
+
+        body.theme-skin .toc-item:hover {
+            background: #e8d1b9;
+        }
+
+        body.theme-skin .toolbar-btn:hover {
+            background: #d4b696;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="container">
-        <h1><i class="fas fa-book-open"></i> PDF Flipbook Reader</h1>
-        
-        <div class="upload-options">
-            <!-- Option 1: Upload PDF -->
-            <div class="option-card" id="uploadOption">
-                <div class="option-title">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <h3>Upload PDF File</h3>
-                </div>
-                <p class="option-desc">Select a PDF file from your computer to create a flipbook.</p>
-                <input type="file" id="pdfUpload" class="file-input" accept=".pdf">
-                <label for="pdfUpload" class="file-label">
-                    <i class="fas fa-file-pdf"></i> Choose PDF File
-                </label>
-                <div id="fileName"></div>
-            </div>
+<body class="theme-white">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
 
-            <!-- Option 2: Local file (same directory) -->
-            <div class="option-card" id="localOption">
-                <div class="option-title">
-                    <i class="fas fa-folder-open"></i>
-                    <h3>Load Local PDF</h3>
-                </div>
-                <p class="option-desc">If your PDF is in the same folder as this HTML file, enter the filename:</p>
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <input type="text" id="localFileName" placeholder="book.pdf" value="book.pdf" 
-                           style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px;">
-                    <button onclick="loadLocalPDF()" style="padding: 12px 25px;">Load</button>
-                </div>
-            </div>
-
-            <!-- Option 3: URL -->
-            <div class="option-card" id="urlOption">
-                <div class="option-title">
-                    <i class="fas fa-link"></i>
-                    <h3>Load from URL</h3>
-                </div>
-                <p class="option-desc">Enter the URL of a PDF file (must be CORS enabled):</p>
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <input type="url" id="pdfUrl" placeholder="https://example.com/document.pdf" 
-                           style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px;">
-                    <button onclick="loadFromURL()" style="padding: 12px 25px;">Load</button>
-                </div>
-            </div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">Initializing Flipbook...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
         </div>
-
-        <div class="instructions">
-            <h4><i class="fas fa-info-circle"></i> Important Instructions:</h4>
-            <ol>
-                <li><strong>For local files:</strong> Place your PDF file (e.g., "book.pdf") in the same folder as this HTML file</li>
-                <li><strong>OR</strong> Use the upload option to select any PDF from your computer</li>
-                <li><strong>Note:</strong> Some browsers restrict local file access. Use Chrome and allow file access if prompted</li>
-                <li><strong>Alternative:</strong> Run a local server for best results: 
-                    <code style="background: #555; color: white; padding: 2px 5px; border-radius: 3px;">
-                        python -m http.server 8000
-                    </code>
-                </li>
-            </ol>
-        </div>
-
-        <div class="error-message" id="errorMessage">
-            <strong><i class="fas fa-exclamation-triangle"></i> Error Loading PDF</strong>
-            <div id="errorDetails">Please check the file path and try again.</div>
-            <div class="error-details" id="errorDebug"></div>
-        </div>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div id="loadingText">Loading PDF...</div>
-            <div id="loadingDetails" style="margin-top: 10px; color: #666;"></div>
-        </div>
-
-        <div class="flipbook-container" id="flipbookContainer">
-            <div id="book"></div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="flipbook.zoomIn()">+</button>
-                <button class="zoom-btn" onclick="flipbook.zoomOut()">-</button>
-                <button class="zoom-btn" onclick="flipbook.resetZoom()">⟲</button>
-            </div>
-        </div>
-
-        <div class="controls" id="controls">
-            <button id="firstBtn"><i class="fas fa-fast-backward"></i> First</button>
-            <button id="prevBtn"><i class="fas fa-chevron-left"></i> Prev</button>
-            
-            <div class="page-info">
-                Page: <span id="currentPage">1</span> / <span id="totalPages">0</span>
-            </div>
-            
-            <button id="nextBtn">Next <i class="fas fa-chevron-right"></i></button>
-            <button id="lastBtn">Last <i class="fas fa-fast-forward"></i></button>
-        </div>
-
-        <div class="thumbnail-bar" id="thumbnailBar"></div>
     </div>
 
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-book-open"></i> PDF Flipbook</h1>
+                <p>Professional PDF Reader</p>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span>Total Pages:</span>
+                    <span class="stat-value" id="statTotalPages">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Current Page:</span>
+                    <span class="stat-value" id="statCurrentPage">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Completion:</span>
+                    <span class="stat-value" id="statCompletion">0%</span>
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <h3><i class="fas fa-list"></i> Table of Contents</h3>
+                <ul class="toc-list" id="tocList">
+                    <!-- Dynamic TOC will be inserted here -->
+                </ul>
+            </div>
+
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label><i class="fas fa-palette"></i> Theme</label>
+                    <div class="theme-selector">
+                        <div class="theme-btn white active" data-theme="white" title="White Theme"></div>
+                        <div class="theme-btn skin" data-theme="skin" title="Skin Color Theme"></div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label><i class="fas fa-tachometer-alt"></i> Animation Speed</label>
+                    <input type="range" min="300" max="1200" value="800" class="range-slider" id="animationSpeed">
+                </div>
+
+                <div class="setting-group">
+                    <label><i class="fas fa-eye"></i> Display Mode</label>
+                    <select id="displayMode" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: var(--border-radius);">
+                        <option value="single">Single Page</option>
+                        <option value="double" selected>Double Page</option>
+                    </select>
+                </div>
+
+                <button id="downloadBtn" style="width: 100%; padding: 12px; background: var(--secondary-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer; margin-top: 10px; font-weight: 600;">
+                    <i class="fas fa-download"></i> Download Current Page
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="firstBtn" title="First Page">
+                        <i class="fas fa-fast-backward"></i>
+                    </button>
+                    <button class="toolbar-btn" id="prevBtn" title="Previous Page">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <div class="page-navigator">
+                        <span>Page</span>
+                        <input type="number" class="page-input" id="pageInput" min="1" value="1">
+                        <span>of <span id="totalPages">0</span></span>
+                    </div>
+                    
+                    <button class="toolbar-btn" id="nextBtn" title="Next Page">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="toolbar-btn" id="lastBtn" title="Last Page">
+                        <i class="fas fa-fast-forward"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="zoomInBtn" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="toolbar-btn" id="zoomOutBtn" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="toolbar-btn" id="fullscreenBtn" title="Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="toolbar-btn" id="thumbToggle" title="Toggle Thumbnails">
+                        <i class="fas fa-images"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flipbook Container -->
+            <div class="flipbook-container">
+                <div id="book"></div>
+                
+                <!-- Zoom Controls -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomInBtn2" title="Zoom In">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Reset Zoom">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="zoom-btn" id="zoomOutBtn2" title="Zoom Out">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Thumbnail Strip -->
+            <div class="thumbnail-strip" id="thumbnailStrip">
+                <!-- Thumbnails will be inserted here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        class PDFFlipbook {
+        // PDF.js worker configuration
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        class ProfessionalFlipbook {
             constructor() {
+                this.pdfPath = 'book.pdf'; // Your PDF file name
                 this.pdfDoc = null;
                 this.totalPages = 0;
                 this.currentPage = 0;
-                this.pages = [];
+                this.pages = new Map();
                 this.isFlipping = false;
                 this.scale = 1.5;
                 this.zoom = 1;
+                this.theme = 'white';
+                this.animationSpeed = 800;
+                this.displayMode = 'double';
                 
                 this.init();
             }
             
             init() {
-                this.setupPDFJS();
+                this.cacheElements();
                 this.setupEventListeners();
+                this.loadPDF();
             }
             
-            setupPDFJS() {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 
-                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            cacheElements() {
+                this.elements = {
+                    // Core elements
+                    book: document.getElementById('book'),
+                    loadingScreen: document.getElementById('loadingScreen'),
+                    loadingText: document.getElementById('loadingText'),
+                    progressFill: document.getElementById('progressFill'),
+                    
+                    // Statistics
+                    statTotalPages: document.getElementById('statTotalPages'),
+                    statCurrentPage: document.getElementById('statCurrentPage'),
+                    statCompletion: document.getElementById('statCompletion'),
+                    totalPages: document.getElementById('totalPages'),
+                    
+                    // Controls
+                    firstBtn: document.getElementById('firstBtn'),
+                    prevBtn: document.getElementById('prevBtn'),
+                    nextBtn: document.getElementById('nextBtn'),
+                    lastBtn: document.getElementById('lastBtn'),
+                    pageInput: document.getElementById('pageInput'),
+                    zoomInBtn: document.getElementById('zoomInBtn'),
+                    zoomOutBtn: document.getElementById('zoomOutBtn'),
+                    zoomInBtn2: document.getElementById('zoomInBtn2'),
+                    zoomOutBtn2: document.getElementById('zoomOutBtn2'),
+                    zoomResetBtn: document.getElementById('zoomResetBtn'),
+                    fullscreenBtn: document.getElementById('fullscreenBtn'),
+                    thumbToggle: document.getElementById('thumbToggle'),
+                    
+                    // Settings
+                    animationSpeed: document.getElementById('animationSpeed'),
+                    displayMode: document.getElementById('displayMode'),
+                    themeButtons: document.querySelectorAll('.theme-btn'),
+                    downloadBtn: document.getElementById('downloadBtn'),
+                    
+                    // Navigation
+                    tocList: document.getElementById('tocList'),
+                    thumbnailStrip: document.getElementById('thumbnailStrip'),
+                    
+                    // Mobile
+                    mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+                    sidebar: document.getElementById('sidebar')
+                };
             }
             
             setupEventListeners() {
-                // File upload
-                document.getElementById('pdfUpload').addEventListener('change', (e) => {
-                    this.handleFileUpload(e.target.files[0]);
+                // Navigation buttons
+                this.elements.firstBtn.addEventListener('click', () => this.goToPage(0));
+                this.elements.prevBtn.addEventListener('click', () => this.flipPrev());
+                this.elements.nextBtn.addEventListener('click', () => this.flipNext());
+                this.elements.lastBtn.addEventListener('click', () => this.goToPage(this.totalPages - 1));
+                
+                // Page input
+                this.elements.pageInput.addEventListener('change', (e) => {
+                    const pageNum = parseInt(e.target.value);
+                    if (pageNum >= 1 && pageNum <= this.totalPages) {
+                        this.goToPage(pageNum - 1);
+                    }
                 });
                 
-                // Control buttons
-                document.getElementById('firstBtn').addEventListener('click', () => this.goToPage(0));
-                document.getElementById('prevBtn').addEventListener('click', () => this.flipPrev());
-                document.getElementById('nextBtn').addEventListener('click', () => this.flipNext());
-                document.getElementById('lastBtn').addEventListener('click', () => this.goToPage(this.totalPages - 1));
+                // Zoom controls
+                this.elements.zoomInBtn.addEventListener('click', () => this.zoomIn());
+                this.elements.zoomOutBtn.addEventListener('click', () => this.zoomOut());
+                this.elements.zoomInBtn2.addEventListener('click', () => this.zoomIn());
+                this.elements.zoomOutBtn2.addEventListener('click', () => this.zoomOut());
+                this.elements.zoomResetBtn.addEventListener('click', () => this.resetZoom());
+                this.elements.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+                this.elements.thumbToggle.addEventListener('click', () => this.toggleThumbnails());
                 
-                // Keyboard navigation
+                // Settings
+                this.elements.animationSpeed.addEventListener('input', (e) => {
+                    this.animationSpeed = parseInt(e.target.value);
+                    this.updateAnimationSpeed();
+                });
+                
+                this.elements.displayMode.addEventListener('change', (e) => {
+                    this.displayMode = e.target.value;
+                    this.updateDisplayMode();
+                });
+                
+                // Theme switching
+                this.elements.themeButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.changeTheme(btn.dataset.theme);
+                    });
+                });
+                
+                // Download button
+                this.elements.downloadBtn.addEventListener('click', () => this.downloadCurrentPage());
+                
+                // Mobile menu
+                this.elements.mobileMenuBtn.addEventListener('click', () => {
+                    this.elements.sidebar.classList.toggle('active');
+                });
+                
+                // Keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
                     if (e.target.tagName === 'INPUT') return;
                     
@@ -468,103 +934,223 @@
                         case 'ArrowRight': e.preventDefault(); this.flipNext(); break;
                         case 'Home': e.preventDefault(); this.goToPage(0); break;
                         case 'End': e.preventDefault(); this.goToPage(this.totalPages - 1); break;
+                        case ' ': e.preventDefault(); this.flipNext(); break;
+                        case 'f': case 'F': e.preventDefault(); this.toggleFullscreen(); break;
+                        case '+': case '=': e.preventDefault(); this.zoomIn(); break;
+                        case '-': e.preventDefault(); this.zoomOut(); break;
+                        case '0': e.preventDefault(); this.resetZoom(); break;
+                        case 't': case 'T': e.preventDefault(); this.toggleThumbnails(); break;
+                    }
+                });
+                
+                // Touch gestures
+                this.setupTouchGestures();
+            }
+            
+            setupTouchGestures() {
+                let touchStartX = 0;
+                let touchStartY = 0;
+                
+                this.elements.book.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+                
+                this.elements.book.addEventListener('touchend', (e) => {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    
+                    const diffX = touchStartX - touchEndX;
+                    const diffY = Math.abs(touchStartY - touchEndY);
+                    
+                    // Horizontal swipe with minimal vertical movement
+                    if (diffY < 50 && Math.abs(diffX) > 30) {
+                        diffX > 0 ? this.flipNext() : this.flipPrev();
+                    }
+                }, { passive: true });
+            }
+            
+            async loadPDF() {
+                try {
+                    this.updateLoadingText('Loading PDF file...');
+                    
+                    // Try different methods to load the PDF
+                    await this.loadPDFWithRetry();
+                    
+                } catch (error) {
+                    console.error('PDF loading error:', error);
+                    
+                    // Fallback: Use file input
+                    this.showFileUploadOption();
+                }
+            }
+            
+            async loadPDFWithRetry() {
+                const methods = [
+                    () => pdfjsLib.getDocument(this.pdfPath).promise,
+                    () => pdfjsLib.getDocument({ url: this.pdfPath }).promise
+                ];
+                
+                let lastError;
+                
+                for (const method of methods) {
+                    try {
+                        this.pdfDoc = await method();
+                        this.totalPages = this.pdfDoc.numPages;
+                        await this.initializeBook();
+                        return;
+                    } catch (error) {
+                        lastError = error;
+                        console.warn('PDF loading method failed, trying next...', error);
+                    }
+                }
+                
+                throw lastError;
+            }
+            
+            showFileUploadOption() {
+                this.updateLoadingText('PDF not found. Please upload your book.pdf file.');
+                
+                const uploadHTML = `
+                    <div style="text-align: center; margin-top: 30px;">
+                        <input type="file" id="pdfUpload" accept=".pdf" 
+                               style="display: none;">
+                        <label for="pdfUpload" 
+                               style="display: inline-block; padding: 15px 30px; 
+                                      background: #3498db; color: white; 
+                                      border-radius: 8px; cursor: pointer; 
+                                      font-weight: 600;">
+                            <i class="fas fa-upload"></i> Upload book.pdf
+                        </label>
+                        <p style="margin-top: 15px; color: #666;">
+                            Please upload your "book.pdf" file
+                        </p>
+                    </div>
+                `;
+                
+                this.elements.loadingScreen.innerHTML += uploadHTML;
+                
+                document.getElementById('pdfUpload').addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        await this.loadPDFFromFile(file);
                     }
                 });
             }
             
-            async loadPDF(source) {
-                try {
-                    this.showLoading('Loading PDF document...');
-                    this.hideError();
-                    
-                    // Load PDF from different sources
-                    if (source instanceof File) {
-                        // From file upload
-                        const arrayBuffer = await source.arrayBuffer();
-                        this.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    } else if (typeof source === 'string') {
-                        // From URL or local file path
-                        this.pdfDoc = await pdfjsLib.getDocument(source).promise;
-                    }
-                    
-                    this.totalPages = this.pdfDoc.numPages;
-                    this.showLoading(`Processing ${this.totalPages} pages...`);
-                    
-                    // Initialize book
-                    this.initializeBook();
-                    
-                    // Load first few pages
-                    await this.loadInitialPages();
-                    
-                    // Show flipbook
-                    this.showFlipbook();
-                    this.updateUI();
-                    
-                } catch (error) {
-                    console.error('PDF Loading Error:', error);
-                    this.showError('Failed to load PDF', error.message);
-                } finally {
-                    this.hideLoading();
-                }
+            async loadPDFFromFile(file) {
+                const arrayBuffer = await file.arrayBuffer();
+                this.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                this.totalPages = this.pdfDoc.numPages;
+                await this.initializeBook();
             }
             
-            initializeBook() {
-                const book = document.getElementById('book');
-                book.innerHTML = '';
+            async initializeBook() {
+                this.updateLoadingText(`Loading ${this.totalPages} pages...`);
+                
+                // Update statistics
+                this.elements.statTotalPages.textContent = this.totalPages;
+                this.elements.totalPages.textContent = this.totalPages;
+                this.elements.pageInput.max = this.totalPages;
+                
+                // Initialize book structure
+                this.createBookStructure();
+                
+                // Load first few pages
+                await this.loadInitialPages();
+                
+                // Generate TOC
+                this.generateTableOfContents();
+                
+                // Generate thumbnails
+                this.generateThumbnails();
+                
+                // Hide loading screen
+                setTimeout(() => {
+                    this.elements.loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        this.elements.loadingScreen.style.display = 'none';
+                        this.updateUI();
+                    }, 500);
+                }, 1000);
+            }
+            
+            createBookStructure() {
+                this.elements.book.innerHTML = '';
                 
                 for (let i = 0; i < this.totalPages; i++) {
                     const page = document.createElement('div');
                     page.className = 'page';
                     page.dataset.page = i;
-                    page.dataset.loaded = 'false';
+                    page.style.transitionDuration = `${this.animationSpeed}ms`;
                     
-                    // Position pages
-                    if (i % 2 === 0) {
-                        page.style.left = '50%';
+                    // Position based on display mode
+                    if (this.displayMode === 'double') {
+                        if (i % 2 === 0) {
+                            page.style.left = '50%';
+                        } else {
+                            page.style.left = '0';
+                        }
                     } else {
-                        page.style.left = '0';
+                        page.style.left = '50%';
                     }
                     
-                    // Placeholder
-                    page.innerHTML = `
-                        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
-                            <div style="text-align:center;">
-                                <div style="font-size:2rem;margin-bottom:10px;">📄</div>
-                                <div>Page ${i + 1}</div>
-                                <div style="font-size:0.8rem;color:#999;margin-top:5px;">Loading...</div>
-                            </div>
+                    // Placeholder content
+                    const placeholder = document.createElement('div');
+                    placeholder.style.cssText = `
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: ${this.theme === 'skin' ? '#faf3eb' : 'white'};
+                        padding: 20px;
+                        text-align: center;
+                    `;
+                    
+                    placeholder.innerHTML = `
+                        <div style="font-size: 3rem; margin-bottom: 20px; color: #3498db;">📄</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #2c3e50;">
+                            Page ${i + 1}
+                        </div>
+                        <div style="color: #7f8c8d; font-size: 0.9rem;">
+                            Loading content...
                         </div>
                     `;
                     
-                    // Click to flip
-                    page.addEventListener('click', () => {
-                        if (i === this.currentPage) {
-                            this.flipNext();
-                        }
-                    });
+                    page.appendChild(placeholder);
+                    this.elements.book.appendChild(page);
                     
-                    book.appendChild(page);
+                    // Set z-index for proper stacking
                     page.style.zIndex = this.totalPages - i;
                 }
             }
             
             async loadInitialPages() {
-                // Load first 3 pages
-                const pagesToLoad = Math.min(3, this.totalPages);
-                for (let i = 0; i < pagesToLoad; i++) {
+                // Load first 4 pages immediately
+                const initialPages = Math.min(4, this.totalPages);
+                
+                for (let i = 0; i < initialPages; i++) {
                     await this.renderPage(i);
-                    this.updateProgress(i + 1, pagesToLoad);
+                    this.updateProgress(i + 1, initialPages);
                 }
                 
-                // Generate thumbnails
-                this.generateThumbnails();
+                // Load thumbnails for first 10 pages
+                const thumbnailPages = Math.min(10, this.totalPages);
+                for (let i = 0; i < thumbnailPages; i++) {
+                    if (i >= initialPages) {
+                        await this.renderThumbnail(i);
+                    }
+                }
             }
             
             async renderPage(pageIndex) {
-                if (this.pages[pageIndex]) return;
+                if (this.pages.has(pageIndex)) return;
                 
                 try {
-                    const page = await this.pdfDoc.getPage(pageIndex + 1);
+                    const pageNum = pageIndex + 1;
+                    const page = await this.pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: this.scale * this.zoom });
                     
                     const canvas = document.createElement('canvas');
@@ -578,9 +1164,8 @@
                     }).promise;
                     
                     const imgData = canvas.toDataURL('image/jpeg', 0.9);
-                    this.pages[pageIndex] = imgData;
+                    this.pages.set(pageIndex, imgData);
                     
-                    // Update page element
                     this.updatePageElement(pageIndex, imgData);
                     
                 } catch (error) {
@@ -588,65 +1173,135 @@
                 }
             }
             
+            async renderThumbnail(pageIndex) {
+                try {
+                    const pageNum = pageIndex + 1;
+                    const page = await this.pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 0.15 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    return canvas.toDataURL('image/jpeg', 0.7);
+                    
+                } catch (error) {
+                    console.error(`Error rendering thumbnail ${pageIndex + 1}:`, error);
+                    return null;
+                }
+            }
+            
             updatePageElement(pageIndex, imgData) {
-                const pageElement = document.querySelector(`.page[data-page="${pageIndex}"]`);
+                const pageElement = this.elements.book.querySelector(`.page[data-page="${pageIndex}"]`);
                 if (!pageElement) return;
                 
-                pageElement.dataset.loaded = 'true';
-                pageElement.innerHTML = `<img src="${imgData}" alt="Page ${pageIndex + 1}">`;
+                pageElement.innerHTML = `
+                    <img src="${imgData}" alt="Page ${pageIndex + 1}" 
+                         style="width:100%;height:100%;object-fit:contain;">
+                    <div class="page-number">${pageIndex + 1}</div>
+                `;
+                
+                // Add click event for flipping
+                pageElement.addEventListener('click', () => {
+                    if (pageIndex === this.currentPage && pageIndex < this.totalPages - 1) {
+                        this.flipNext();
+                    }
+                });
+            }
+            
+            generateTableOfContents() {
+                this.elements.tocList.innerHTML = '';
+                
+                // Create placeholder TOC entries
+                const tocEntries = [
+                    { title: 'Cover', page: 0 },
+                    { title: 'Table of Contents', page: 2 },
+                    { title: 'Introduction', page: 5 },
+                    { title: 'Chapter 1', page: 10 },
+                    { title: 'Chapter 2', page: 25 },
+                    { title: 'Chapter 3', page: 45 },
+                    { title: 'Chapter 4', page: 65 },
+                    { title: 'Chapter 5', page: 85 },
+                    { title: 'Conclusion', page: 95 },
+                    { title: 'References', page: 100 }
+                ].filter(entry => entry.page < this.totalPages);
+                
+                tocEntries.forEach(entry => {
+                    const li = document.createElement('li');
+                    li.className = 'toc-item';
+                    li.dataset.page = entry.page;
+                    li.innerHTML = `
+                        <i class="fas fa-bookmark"></i>
+                        <span>${entry.title}</span>
+                        <span style="margin-left: auto; font-size: 0.85rem; color: #7f8c8d;">
+                            ${entry.page + 1}
+                        </span>
+                    `;
+                    
+                    li.addEventListener('click', () => this.goToPage(entry.page));
+                    this.elements.tocList.appendChild(li);
+                });
             }
             
             generateThumbnails() {
-                const thumbnailBar = document.getElementById('thumbnailBar');
-                thumbnailBar.innerHTML = '';
-                thumbnailBar.style.display = 'flex';
+                this.elements.thumbnailStrip.innerHTML = '';
                 
-                // Create thumbnails for first 10 pages initially
-                const initialThumbs = Math.min(10, this.totalPages);
+                // Generate thumbnails for first 15 pages immediately
+                const initialThumbs = Math.min(15, this.totalPages);
                 
                 for (let i = 0; i < initialThumbs; i++) {
-                    const thumbnail = document.createElement('div');
-                    thumbnail.className = 'thumbnail';
-                    thumbnail.dataset.page = i;
-                    
-                    // Placeholder
-                    thumbnail.innerHTML = `<div style="width:100%;height:100%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:0.8rem;">${i + 1}</div>`;
-                    
-                    thumbnail.addEventListener('click', () => this.goToPage(i));
-                    thumbnailBar.appendChild(thumbnail);
-                    
-                    // Update with actual image if loaded
-                    if (this.pages[i]) {
-                        this.updateThumbnail(i, this.pages[i]);
-                    }
+                    this.createThumbnailElement(i);
                 }
                 
                 // Lazy load remaining thumbnails
                 this.loadRemainingThumbnails(initialThumbs);
             }
             
-            updateThumbnail(pageIndex, imgData) {
-                const thumbnail = document.querySelector(`.thumbnail[data-page="${pageIndex}"]`);
-                if (thumbnail) {
-                    thumbnail.innerHTML = `<img src="${imgData}" alt="Page ${pageIndex + 1}">`;
+            createThumbnailElement(pageIndex) {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'thumbnail';
+                thumbnail.dataset.page = pageIndex;
+                
+                // Placeholder
+                thumbnail.innerHTML = `
+                    <div style="width:100%;height:100%;background:${this.theme === 'skin' ? '#e8d1b9' : '#f0f0f0'};
+                                display:flex;align-items:center;justify-content:center;
+                                font-weight:bold;color:#666;">
+                        ${pageIndex + 1}
+                    </div>
+                    <div class="thumbnail-number">${pageIndex + 1}</div>
+                `;
+                
+                thumbnail.addEventListener('click', () => this.goToPage(pageIndex));
+                this.elements.thumbnailStrip.appendChild(thumbnail);
+                
+                // Load actual thumbnail image in background
+                this.loadThumbnailImage(pageIndex, thumbnail);
+            }
+            
+            async loadThumbnailImage(pageIndex, thumbnailElement) {
+                const imgData = await this.renderThumbnail(pageIndex);
+                if (imgData) {
+                    thumbnailElement.innerHTML = `
+                        <img src="${imgData}" alt="Page ${pageIndex + 1}">
+                        <div class="thumbnail-number">${pageIndex + 1}</div>
+                    `;
+                    thumbnailElement.addEventListener('click', () => this.goToPage(pageIndex));
                 }
             }
             
             async loadRemainingThumbnails(startIndex) {
                 for (let i = startIndex; i < this.totalPages; i += 5) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     
                     for (let j = i; j < Math.min(i + 5, this.totalPages); j++) {
-                        const thumbnail = document.createElement('div');
-                        thumbnail.className = 'thumbnail';
-                        thumbnail.dataset.page = j;
-                        thumbnail.innerHTML = `<div style="width:100%;height:100%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:0.8rem;">${j + 1}</div>`;
-                        thumbnail.addEventListener('click', () => this.goToPage(j));
-                        document.getElementById('thumbnailBar').appendChild(thumbnail);
-                        
-                        if (this.pages[j]) {
-                            this.updateThumbnail(j, this.pages[j]);
-                        }
+                        this.createThumbnailElement(j);
                     }
                 }
             }
@@ -654,26 +1309,29 @@
             async flipNext() {
                 if (this.isFlipping || this.currentPage >= this.totalPages - 1) return;
                 
+                const nextPage = this.currentPage + (this.displayMode === 'double' ? 2 : 1);
+                
                 // Ensure next page is loaded
-                if (!this.pages[this.currentPage + 1]) {
-                    await this.renderPage(this.currentPage + 1);
+                if (nextPage < this.totalPages && !this.pages.has(nextPage)) {
+                    await this.renderPage(nextPage);
                 }
                 
                 this.isFlipping = true;
-                const currentPage = document.querySelector(`.page[data-page="${this.currentPage}"]`);
+                const currentPageElement = this.getPageElement(this.currentPage);
                 
-                if (currentPage) {
-                    currentPage.classList.add('flipping');
+                if (currentPageElement) {
+                    currentPageElement.classList.add('flipping');
                     
                     setTimeout(() => {
-                        currentPage.style.zIndex = 1;
-                        this.currentPage++;
+                        currentPageElement.style.zIndex = 1;
+                        this.currentPage = Math.min(this.totalPages - 1, 
+                            this.currentPage + (this.displayMode === 'double' ? 2 : 1));
                         this.updateUI();
                         this.isFlipping = false;
                         
-                        // Preload next pages
+                        // Preload adjacent pages
                         this.preloadAdjacentPages();
-                    }, 800);
+                    }, this.animationSpeed);
                 }
             }
             
@@ -681,14 +1339,15 @@
                 if (this.isFlipping || this.currentPage <= 0) return;
                 
                 this.isFlipping = true;
-                const prevPage = document.querySelector(`.page[data-page="${this.currentPage - 1}"]`);
+                const prevPage = this.currentPage - (this.displayMode === 'double' ? 2 : 1);
+                const prevPageElement = this.getPageElement(prevPage);
                 
-                if (prevPage) {
-                    prevPage.classList.remove('flipping');
-                    prevPage.style.zIndex = this.totalPages - (this.currentPage - 1);
+                if (prevPageElement) {
+                    prevPageElement.classList.remove('flipping');
+                    prevPageElement.style.zIndex = this.totalPages - prevPage;
                     
                     setTimeout(() => {
-                        this.currentPage--;
+                        this.currentPage = Math.max(0, prevPage);
                         this.updateUI();
                         this.isFlipping = false;
                     }, 300);
@@ -696,15 +1355,15 @@
             }
             
             async goToPage(pageIndex) {
-                if (pageIndex < 0 || pageIndex >= this.totalPages) return;
+                if (pageIndex < 0 || pageIndex >= this.totalPages || this.isFlipping) return;
                 
                 // Ensure page is loaded
-                if (!this.pages[pageIndex]) {
+                if (!this.pages.has(pageIndex)) {
                     await this.renderPage(pageIndex);
                 }
                 
-                // Reset all pages
-                document.querySelectorAll('.page').forEach(page => {
+                // Reset all pages to proper z-index
+                document.querySelectorAll('.page').forEach((page, index) => {
                     page.classList.remove('flipping');
                     const pageNum = parseInt(page.dataset.page);
                     page.style.zIndex = this.totalPages - pageNum;
@@ -715,89 +1374,131 @@
                 
                 // Preload adjacent pages
                 this.preloadAdjacentPages();
+                
+                // Hide sidebar on mobile
+                if (window.innerWidth <= 1200) {
+                    this.elements.sidebar.classList.remove('active');
+                }
             }
             
             preloadAdjacentPages() {
                 const pagesToLoad = [];
-                for (let i = 1; i <= 2; i++) {
+                const lookAhead = 3;
+                
+                for (let i = 1; i <= lookAhead; i++) {
                     const nextPage = this.currentPage + i;
-                    const prevPage = this.currentPage - i;
-                    
-                    if (nextPage < this.totalPages && !this.pages[nextPage]) {
+                    if (nextPage < this.totalPages && !this.pages.has(nextPage)) {
                         pagesToLoad.push(nextPage);
                     }
-                    if (prevPage >= 0 && !this.pages[prevPage]) {
+                    
+                    const prevPage = this.currentPage - i;
+                    if (prevPage >= 0 && !this.pages.has(prevPage)) {
                         pagesToLoad.push(prevPage);
                     }
                 }
                 
-                // Load in background
+                // Load pages in background
                 pagesToLoad.forEach(pageIndex => {
                     setTimeout(() => this.renderPage(pageIndex), 100);
                 });
             }
             
+            getPageElement(pageIndex) {
+                return this.elements.book.querySelector(`.page[data-page="${pageIndex}"]`);
+            }
+            
             updateUI() {
-                // Update page counter
-                document.getElementById('currentPage').textContent = this.currentPage + 1;
-                document.getElementById('totalPages').textContent = this.totalPages;
+                // Update page indicator
+                this.elements.statCurrentPage.textContent = this.currentPage + 1;
+                this.elements.pageInput.value = this.currentPage + 1;
                 
-                // Update button states
-                document.getElementById('firstBtn').disabled = this.currentPage <= 0;
-                document.getElementById('prevBtn').disabled = this.currentPage <= 0;
-                document.getElementById('nextBtn').disabled = this.currentPage >= this.totalPages - 1;
-                document.getElementById('lastBtn').disabled = this.currentPage >= this.totalPages - 1;
+                // Calculate completion percentage
+                const completion = Math.round(((this.currentPage + 1) / this.totalPages) * 100);
+                this.elements.statCompletion.textContent = `${completion}%`;
+                
+                // Update buttons state
+                this.elements.firstBtn.disabled = this.currentPage <= 0;
+                this.elements.prevBtn.disabled = this.currentPage <= 0;
+                this.elements.nextBtn.disabled = this.currentPage >= this.totalPages - 1;
+                this.elements.lastBtn.disabled = this.currentPage >= this.totalPages - 1;
                 
                 // Update thumbnails
+                this.updateThumbnailSelection();
+                
+                // Update table of contents
+                this.updateTOCSelection();
+            }
+            
+            updateThumbnailSelection() {
                 document.querySelectorAll('.thumbnail').forEach(thumb => {
                     thumb.classList.remove('active');
-                    if (parseInt(thumb.dataset.page) === this.currentPage) {
+                    const pageIndex = parseInt(thumb.dataset.page);
+                    
+                    if (pageIndex === this.currentPage) {
                         thumb.classList.add('active');
+                        
+                        // Scroll into view
+                        setTimeout(() => {
+                            thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }, 100);
                     }
                 });
             }
             
-            showFlipbook() {
-                document.getElementById('flipbookContainer').style.display = 'block';
-                document.getElementById('controls').style.display = 'flex';
+            updateTOCSelection() {
+                document.querySelectorAll('.toc-item').forEach(item => {
+                    item.classList.remove('active');
+                    const pageIndex = parseInt(item.dataset.page);
+                    
+                    if (this.currentPage >= pageIndex) {
+                        item.classList.add('active');
+                    }
+                });
             }
             
-            showLoading(message) {
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('loadingText').textContent = message;
+            updateAnimationSpeed() {
+                document.querySelectorAll('.page').forEach(page => {
+                    page.style.transitionDuration = `${this.animationSpeed}ms`;
+                });
             }
             
-            hideLoading() {
-                document.getElementById('loading').style.display = 'none';
+            updateDisplayMode() {
+                document.querySelectorAll('.page').forEach((page, index) => {
+                    if (this.displayMode === 'single') {
+                        page.style.left = '50%';
+                    } else {
+                        if (index % 2 === 0) {
+                            page.style.left = '50%';
+                        } else {
+                            page.style.left = '0';
+                        }
+                    }
+                });
             }
             
-            updateProgress(current, total) {
-                const percent = Math.round((current / total) * 100);
-                document.getElementById('loadingDetails').textContent = `${current} of ${total} pages processed (${percent}%)`;
-            }
-            
-            showError(message, details = '') {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorDetails').textContent = message;
-                if (details) {
-                    document.getElementById('errorDebug').textContent = details;
-                }
-            }
-            
-            hideError() {
-                document.getElementById('errorMessage').style.display = 'none';
-            }
-            
-            handleFileUpload(file) {
-                if (!file || file.type !== 'application/pdf') {
-                    this.showError('Please select a valid PDF file');
-                    return;
-                }
+            changeTheme(theme) {
+                this.theme = theme;
                 
-                document.getElementById('fileName').innerHTML = 
-                    `<i class="fas fa-check"></i> Selected: <strong>${file.name}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                // Update body class
+                document.body.className = `theme-${theme}`;
                 
-                this.loadPDF(file);
+                // Update theme buttons
+                this.elements.themeButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.theme === theme) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Update placeholder backgrounds
+                document.querySelectorAll('.page').forEach(page => {
+                    if (!this.pages.has(parseInt(page.dataset.page))) {
+                        const placeholder = page.querySelector('div');
+                        if (placeholder) {
+                            placeholder.style.background = theme === 'skin' ? '#faf3eb' : 'white';
+                        }
+                    }
+                });
             }
             
             zoomIn() {
@@ -825,82 +1526,83 @@
                 
                 pagesToReload.forEach(pageIndex => {
                     if (pageIndex >= 0 && pageIndex < this.totalPages) {
-                        this.pages[pageIndex] = null;
-                        this.renderPage(pageIndex);
+                        this.pages.delete(pageIndex);
+                        setTimeout(() => this.renderPage(pageIndex), 100);
                     }
                 });
             }
-        }
-
-        // Global functions for button clicks
-        function loadLocalPDF() {
-            const fileName = document.getElementById('localFileName').value.trim();
-            if (!fileName) {
-                alert('Please enter a filename');
-                return;
+            
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen failed:', err);
+                    });
+                    document.body.classList.add('fullscreen');
+                } else {
+                    document.exitFullscreen();
+                    document.body.classList.remove('fullscreen');
+                }
             }
             
-            // Try different methods to load the file
-            window.flipbook.loadPDF(fileName);
+            toggleThumbnails() {
+                const isVisible = this.elements.thumbnailStrip.style.display !== 'none';
+                this.elements.thumbnailStrip.style.display = isVisible ? 'none' : 'flex';
+                this.elements.thumbToggle.classList.toggle('active', !isVisible);
+            }
+            
+            async downloadCurrentPage() {
+                try {
+                    if (!this.pages.has(this.currentPage)) {
+                        await this.renderPage(this.currentPage);
+                    }
+                    
+                    const imgData = this.pages.get(this.currentPage);
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `page-${this.currentPage + 1}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                } catch (error) {
+                    console.error('Error downloading page:', error);
+                    alert('Unable to download page. Please try again.');
+                }
+            }
+            
+            updateLoadingText(text) {
+                this.elements.loadingText.textContent = text;
+            }
+            
+            updateProgress(current, total) {
+                const percent = Math.round((current / total) * 100);
+                this.elements.progressFill.style.width = `${percent}%`;
+            }
         }
         
-        function loadFromURL() {
-            const url = document.getElementById('pdfUrl').value.trim();
-            if (!url) {
-                alert('Please enter a URL');
-                return;
-            }
-            
-            window.flipbook.loadPDF(url);
-        }
-
         // Initialize when page loads
         window.addEventListener('DOMContentLoaded', () => {
-            window.flipbook = new PDFFlipbook();
+            window.flipbook = new ProfessionalFlipbook();
             
-            // Try to auto-load book.pdf if it exists
-            autoDetectPDF();
-        });
-        
-        function autoDetectPDF() {
-            // Try to fetch book.pdf to see if it exists
-            fetch('book.pdf')
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById('loadingDetails').textContent = 'Found book.pdf, loading...';
-                        setTimeout(() => loadLocalPDF(), 1000);
-                    }
-                })
-                .catch(() => {
-                    // File doesn't exist or can't be accessed
-                    console.log('book.pdf not found or not accessible');
-                });
-        }
-
-        // Handle drag and drop
-        document.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        document.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            // Handle fullscreen changes
+            document.addEventListener('fullscreenchange', () => {
+                const isFullscreen = !!document.fullscreenElement;
+                const icon = document.querySelector('#fullscreenBtn i');
+                icon.className = isFullscreen ? 'fas fa-compress' : 'fas fa-expand';
+            });
             
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type === 'application/pdf') {
-                window.flipbook.handleFileUpload(files[0]);
-            }
-        });
-
-        // Add help text for CORS issues
-        window.addEventListener('error', function(e) {
-            if (e.message.includes('CORS') || e.message.includes('Access-Control')) {
-                document.getElementById('errorDebug').innerHTML += 
-                    '<br><br><strong>CORS Solution:</strong> Run a local server:<br>' +
-                    '<code>python -m http.server 8000</code><br>' +
-                    'Then access via: <code>http://localhost:8000</code>';
-            }
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const menuBtn = document.getElementById('mobileMenuBtn');
+                
+                if (window.innerWidth <= 1200 && 
+                    sidebar.classList.contains('active') &&
+                    !sidebar.contains(e.target) && 
+                    !menuBtn.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
         });
     </script>
 </body>
