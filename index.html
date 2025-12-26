@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Flipbook - 104 Pages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .flipbook-container {
+            display: none;
+            width: 100%;
+            height: 80vh;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        #book {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            perspective: 2000px;
+        }
+
+        .page {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background: white;
+            transform-origin: left center;
+            transition: transform 0.8s cubic-bezier(0.42, 0, 0.58, 1);
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .page:nth-child(odd) {
+            transform-origin: right center;
+        }
+
+        .page-front, .page-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+        }
+
+        .page img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: white;
+        }
+
+        .page.flipping {
+            transform: rotateY(-180deg);
+            z-index: 1000;
+            box-shadow: -5px 5px 30px rgba(0,0,0,0.3);
+        }
+
+        .page:nth-child(odd).flipping {
+            transform: rotateY(180deg);
+            box-shadow: 5px 5px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        /* Thumbnail Navigation */
+        .thumbnail-nav {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: none;
+            max-height: 70vh;
+            overflow-y: auto;
+            width: 150px;
+        }
+
+        .thumbnail {
+            width: 100%;
+            height: 80px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+            border-color: #3498db;
+        }
+
+        .thumbnail.active {
+            border-color: #e74c3c;
+            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .flipbook-container {
+                height: 70vh;
+            }
+            
+            .controls {
+                bottom: 10px;
+                padding: 10px 20px;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            
+            .thumbnail-nav {
+                display: none !important;
+            }
+        }
+
+        /* Page Counter */
+        .page-counter {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .zoom-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 PDF Flipbook Converter</h1>
+            <p>Upload your 104-page PDF to create an interactive flipbook</p>
+        </header>
+
+        <div class="upload-section">
+            <h2>Upload Your PDF</h2>
+            <p class="file-info">Supports PDF files up to 50MB</p>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="pdfInput" accept=".pdf" />
+                <label for="pdfInput" class="file-label">
+                    📄 Choose PDF File
+                </label>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Processing page 0 of 104...</div>
+            </div>
+            
+            <div id="fileName" style="margin-top: 10px; color: #7f8c8d;"></div>
+        </div>
+
+        <div class="flipbook-container" id="flipbookContainer">
+            <div id="book"></div>
+            <div class="page-counter" id="pageCounter">Page 1 of 104</div>
+            
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomIn">+</button>
+                <button class="zoom-btn" id="zoomOut">-</button>
+                <button class="zoom-btn" id="zoomReset">⟳</button>
+            </div>
+        </div>
+
+        <div class="thumbnail-nav" id="thumbnailNav"></div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <div style="color: white; font-size: 18px; text-align: center;" id="loadingText">
+                Processing PDF...
+            </div>
+        </div>
+    </div>
+
+    <div class="controls" id="controls" style="display: none;">
+        <button class="btn btn-primary" id="firstBtn" title="First Page">
+            ⏮ First
+        </button>
+        <button class="btn btn-primary" id="prevBtn" title="Previous Page">
+            ◀ Previous
+        </button>
+        
+        <div class="page-info">
+            <span id="currentPage">1</span> / <span id="totalPages">104</span>
+        </div>
+        
+        <button class="btn btn-primary" id="nextBtn" title="Next Page">
+            Next ▶
+        </button>
+        <button class="btn btn-primary" id="lastBtn" title="Last Page">
+            Last ⏭
+        </button>
+        <button class="btn btn-primary" id="thumbToggle" title="Show Thumbnails">
+            📖 Thumbs
+        </button>
+    </div>
+
+    <!-- PDF.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <script>
+        class PDFFlipbook {
+            constructor() {
+                this.pdfDoc = null;
+                this.totalPages = 0;
+                this.currentPage = 0;
+                this.pages = [];
+                this.isFlipping = false;
+                this.scale = 1;
+                this.maxScale = 3;
+                this.minScale = 0.5;
+                
+                this.initElements();
+                this.initEventListeners();
+                this.setupPDFJS();
+            }
+            
+            initElements() {
+                this.elements = {
+                    pdfInput: document.getElementById('pdfInput'),
+                    book: document.getElementById('book'),
+                    flipbookContainer: document.getElementById('flipbookContainer'),
+                    controls: document.getElementById('controls'),
+                    thumbnailNav: document.getElementById('thumbnailNav'),
+                    loadingOverlay: document.getElementById('loadingOverlay'),
+                    loadingText: document.getElementById('loadingText'),
+                    progressContainer: document.getElementById('progressContainer'),
+                    progressFill: document.getElementById('progressFill'),
+                    progressText: document.getElementById('progressText'),
+                    fileName: document.getElementById('fileName'),
+                    pageCounter: document.getElementById('pageCounter'),
+                    currentPage: document.getElementById('currentPage'),
+                    totalPages: document.getElementById('totalPages'),
+                    firstBtn: document.getElementById('firstBtn'),
+                    prevBtn: document.getElementById('prevBtn'),
+                    nextBtn: document.getElementById('nextBtn'),
+                    lastBtn: document.getElementById('lastBtn'),
+                    thumbToggle: document.getElementById('thumbToggle'),
+                    zoomIn: document.getElementById('zoomIn'),
+                    zoomOut: document.getElementById('zoomOut'),
+                    zoomReset: document.getElementById('zoomReset')
+                };
+            }
+            
+            setupPDFJS() {
+                // Set PDF.js worker
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 
+                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+            
+            initEventListeners() {
+                this.elements.pdfInput.addEventListener('change', (e) => this.loadPDF(e));
+                this.elements.firstBtn.addEventListener('click', () => this.goToPage(0));
+                this.elements.prevBtn.addEventListener('click', () => this.flipPrev());
+                this.elements.nextBtn.addEventListener('click', () => this.flipNext());
+                this.elements.lastBtn.addEventListener('click', () => this.goToPage(this.totalPages - 1));
+                this.elements.thumbToggle.addEventListener('click', () => this.toggleThumbnails());
+                
+                // Zoom controls
+                this.elements.zoomIn.addEventListener('click', () => this.zoom(0.2));
+                this.elements.zoomOut.addEventListener('click', () => this.zoom(-0.2));
+                this.elements.zoomReset.addEventListener('click', () => this.zoomReset());
+                
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.flipPrev();
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.flipNext();
+                            break;
+                        case 'Home':
+                            this.goToPage(0);
+                            break;
+                        case 'End':
+                            this.goToPage(this.totalPages - 1);
+                            break;
+                        case 't':
+                        case 'T':
+                            this.toggleThumbnails();
+                            break;
+                    }
+                });
+                
+                // Touch events for mobile
+                let touchStartX = 0;
+                let touchStartY = 0;
+                
+                this.elements.book.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+                
+                this.elements.book.addEventListener('touchend', (e) => {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    
+                    const diffX = touchStartX - touchEndX;
+                    const diffY = Math.abs(touchStartY - touchEndY);
+                    
+                    // Only trigger if vertical movement is minimal (horizontal swipe)
+                    if (diffY < 50 && Math.abs(diffX) > 50) {
+                        if (diffX > 0) {
+                            this.flipNext();
+                        } else {
+                            this.flipPrev();
+                        }
+                    }
+                }, { passive: true });
+            }
+            
+            async loadPDF(event) {
+                const file = event.target.files[0];
+                if (!file || file.type !== 'application/pdf') {
+                    alert('Please select a valid PDF file.');
+                    return;
+                }
+                
+                this.elements.fileName.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                
+                // Show loading
+                this.elements.loadingOverlay.style.display = 'flex';
+                this.elements.progressContainer.style.display = 'block';
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    this.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    this.totalPages = this.pdfDoc.numPages;
+                    
+                    this.elements.totalPages.textContent = this.totalPages;
+                    this.elements.loadingText.textContent = `Processing 104 pages...`;
+                    
+                    // Generate all pages
+                    await this.generatePages();
+                    
+                    // Initialize flipbook
+                    this.initFlipbook();
+                    
+                    // Show controls and flipbook
+                    this.elements.flipbookContainer.style.display = 'block';
+                    this.elements.controls.style.display = 'flex';
+                    
+                    // Hide loading
+                    this.elements.loadingOverlay.style.display = 'none';
+                    this.elements.progressContainer.style.display = 'none';
+                    
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF. Please try another file.');
+                    this.elements.loadingOverlay.style.display = 'none';
+                }
+            }
+            
+            async generatePages() {
+                this.pages = [];
+                this.elements.book.innerHTML = '';
+                
+                // For 104 pages, we'll load first 10 pages immediately, then lazy load the rest
+                const pagesToLoadInitially = Math.min(10, this.totalPages);
+                
+                for (let i = 1; i <= this.totalPages; i++) {
+                    if (i <= pagesToLoadInitially) {
+                        // Load immediately
+                        await this.loadPage(i - 1, i);
+                    } else {
+                        // Create placeholder for lazy loading
+                        this.createPagePlaceholder(i - 1);
+                    }
+                    
+                    // Update progress
+                    const progress = (i / this.totalPages) * 100;
+                    this.elements.progressFill.style.width = `${progress}%`;
+                    this.elements.progressText.textContent = `Processing page ${i} of ${this.totalPages}...`;
+                    
+                    // Small delay to prevent freezing
+                    if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+            
+            async loadPage(pageIndex, pageNumber) {
+                try {
+                    const page = await this.pdfDoc.getPage(pageNumber);
+                    const viewport = page.getViewport({ scale: this.scale * 1.5 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                    this.pages[pageIndex] = imgData;
+                    
+                    // Update existing page or create new one
+                    this.updatePageElement(pageIndex, imgData);
+                    
+                } catch (error) {
+                    console.error(`Error loading page ${pageNumber}:`, error);
+                }
+            }
+            
+            createPagePlaceholder(pageIndex) {
+                const page = document.createElement('div');
+                page.className = 'page';
+                page.dataset.page = pageIndex;
+                page.dataset.loaded = 'false';
+                
+                // Position for left/right pages
+                if (pageIndex % 2 === 0) {
+                    page.style.left = '50%';
+                } else {
+                    page.style.left = '0';
+                }
+                
+                // Placeholder content
+                page.innerHTML = `
+                    <div class="page-front" style="display: flex; align-items: center; justify-content: center; background: #ecf0f1;">
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 24px; margin-bottom: 10px;">📄</div>
+                            <div>Page ${pageIndex + 1}</div>
+                            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">Loading...</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Set z-index
+                page.style.zIndex = this.totalPages - pageIndex;
+                
+                // Add click event
+                page.addEventListener('click', () => {
+                    if (pageIndex === this.currentPage) {
+                        this.flipNext();
+                    } else if (pageIndex < this.currentPage) {
+                        this.goToPage(pageIndex);
+                    }
+                });
+                
+                this.elements.book.appendChild(page);
+            }
+            
+            updatePageElement(pageIndex, imgData) {
+                const page = this.elements.book.querySelector(`.page[data-page="${pageIndex}"]`);
+                if (!page) return;
+                
+                page.dataset.loaded = 'true';
+                
+                const isLeftPage = pageIndex % 2 !== 0;
+                
+                page.innerHTML = `
+                    <div class="page-front">
+                        <img src="${imgData}" alt="Page ${pageIndex + 1}" 
+                             style="transform: scale(${this.scale}); transform-origin: top left;">
+                    </div>
+                `;
+                
+                // Update click event
+                page.addEventListener('click', () => {
+                    if (pageIndex === this.currentPage && pageIndex < this.totalPages - 1) {
+                        this.flipNext();
+                    }
+                });
+            }
+            
+            initFlipbook() {
+                this.currentPage = 0;
+                this.updateUI();
+                this.generateThumbnails();
+            }
+            
+            async flipNext() {
+                if (this.isFlipping || this.currentPage >= this.totalPages - 1) return;
+                
+                // Check if next page needs to be loaded
+                if (!this.pages[this.currentPage + 1]) {
+                    await this.loadPage(this.currentPage + 1, this.currentPage + 2);
+                }
+                
+                this.isFlipping = true;
+                const currentPageElement = this.getPageElement(this.currentPage);
+                
+                if (currentPageElement) {
+                    currentPageElement.classList.add('flipping');
+                    
+                    setTimeout(() => {
+                        currentPageElement.style.zIndex = 1;
+                        this.currentPage++;
+                        this.updateUI();
+                        this.isFlipping = false;
+                        
+                        // Preload next pages
+                        this.preloadAdjacentPages();
+                    }, 800);
+                }
+            }
+            
+            flipPrev() {
+                if (this.isFlipping || this.currentPage <= 0) return;
+                
+                this.isFlipping = true;
+                const prevPageElement = this.getPageElement(this.currentPage - 1);
+                
+                if (prevPageElement) {
+                    prevPageElement.classList.remove('flipping');
+                    prevPageElement.style.zIndex = this.totalPages - (this.currentPage - 1);
+                    
+                    setTimeout(() => {
+                        this.currentPage--;
+                        this.updateUI();
+                        this.isFlipping = false;
+                    }, 300);
+                }
+            }
+            
+            goToPage(pageIndex) {
+                if (pageIndex < 0 || pageIndex >= this.totalPages || this.isFlipping) return;
+                
+                // Load the target page if not loaded
+                if (!this.pages[pageIndex]) {
+                    this.loadPage(pageIndex, pageIndex + 1);
+                }
+                
+                // Reset all pages
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('flipping');
+                    const pageNum = parseInt(page.dataset.page);
+                    page.style.zIndex = this.totalPages - pageNum;
+                });
+                
+                this.currentPage = pageIndex;
+                this.updateUI();
+                
+                // Preload adjacent pages
+                this.preloadAdjacentPages();
+            }
+            
+            async preloadAdjacentPages() {
+                const pagesToPreload = [this.currentPage + 1, this.currentPage + 2, this.currentPage - 1, this.currentPage - 2];
+                
+                for (const pageIndex of pagesToPreload) {
+                    if (pageIndex >= 0 && pageIndex < this.totalPages && !this.pages[pageIndex]) {
+                        await this.loadPage(pageIndex, pageIndex + 1);
+                    }
+                }
+            }
+            
+            getPageElement(pageIndex) {
+                return this.elements.book.querySelector(`.page[data-page="${pageIndex}"]`);
+            }
+            
+            updateUI() {
+                this.elements.currentPage.textContent = this.currentPage + 1;
+                this.elements.pageCounter.textContent = `Page ${this.currentPage + 1} of ${this.totalPages}`;
+                
+                // Update button states
+                this.elements.firstBtn.disabled = this.currentPage <= 0;
+                this.elements.prevBtn.disabled = this.currentPage <= 0;
+                this.elements.nextBtn.disabled = this.currentPage >= this.totalPages - 1;
+                this.elements.lastBtn.disabled = this.currentPage >= this.totalPages - 1;
+                
+                // Update thumbnails
+                this.updateThumbnails();
+            }
+            
+            generateThumbnails() {
+                this.elements.thumbnailNav.innerHTML = '';
+                
+                // Generate thumbnails for first 20 pages initially
+                const initialThumbs = Math.min(20, this.totalPages);
+                
+                for (let i = 0; i < initialThumbs; i++) {
+                    this.createThumbnail(i);
+                }
+                
+                // Lazy load rest of thumbnails
+                setTimeout(() => this.loadRemainingThumbnails(initialThumbs), 1000);
+            }
+            
+            createThumbnail(pageIndex) {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'thumbnail';
+                thumbnail.dataset.page = pageIndex;
+                
+                // Placeholder initially
+                thumbnail.innerHTML = `<div style="width:100%;height:100%;background:#ecf0f1;display:flex;align-items:center;justify-content:center;font-size:12px;">${pageIndex + 1}</div>`;
+                
+                thumbnail.addEventListener('click', () => this.goToPage(pageIndex));
+                
+                this.elements.thumbnailNav.appendChild(thumbnail);
+                
+                // Load actual thumbnail image
+                this.loadThumbnailImage(pageIndex, thumbnail);
+            }
+            
+            async loadThumbnailImage(pageIndex, thumbnailElement) {
+                try {
+                    const page = await this.pdfDoc.getPage(pageIndex + 1);
+                    const viewport = page.getViewport({ scale: 0.1 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    thumbnailElement.innerHTML = `<img src="${imgData}" alt="Page ${pageIndex + 1}">`;
+                    
+                } catch (error) {
+                    console.error(`Error loading thumbnail ${pageIndex}:`, error);
+                }
+            }
+            
+            async loadRemainingThumbnails(startIndex) {
+                for (let i = startIndex; i < this.totalPages; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    this.createThumbnail(i);
+                }
+            }
+            
+            updateThumbnails() {
+                document.querySelectorAll('.thumbnail').forEach(thumb => {
+                    thumb.classList.remove('active');
+                    if (parseInt(thumb.dataset.page) === this.currentPage) {
+                        thumb.classList.add('active');
+                        
+                        // Scroll thumbnail into view
+                        thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }
+            
+            toggleThumbnails() {
+                const isVisible = this.elements.thumbnailNav.style.display === 'block';
+                this.elements.thumbnailNav.style.display = isVisible ? 'none' : 'block';
+                this.elements.thumbToggle.textContent = isVisible ? '📖 Thumbs' : '✖ Close';
+            }
+            
+            zoom(amount) {
+                this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.scale + amount));
+                this.applyZoom();
+            }
+            
+            zoomReset() {
+                this.scale = 1;
+                this.applyZoom();
+            }
+            
+            applyZoom() {
+                document.querySelectorAll('.page img').forEach(img => {
+                    img.style.transform = `scale(${this.scale})`;
+                    img.style.transformOrigin = 'top left';
+                });
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            window.flipbook = new PDFFlipbook();
+            
+            // Optional: Auto-load a PDF if needed
+            // flipbook.loadPDF({ target: { files: [yourFile] } });
+        });
+    </script>
+</body>
+</html>
